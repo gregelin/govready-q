@@ -2,6 +2,23 @@ GovReady-Q Release Notes
 ========================
 
 v.999 (December XX, 2020)
+----------------------------
+
+**Data changes**
+
+* Add `validators` argument to the `file` field in the Attachment model.
+
+**UI changes**
+
+* Added error messages for any files that fail validation for Comment Attachment uploads
+
+**Developer changes**
+
+* Update various Python libraries
+* Added file extension, size and type  validation for Comment Attachment uploads
+* Introducing request profiling with pyinstrument
+
+v.999 (December XX, 2020)
 -------------------------
 
 Add Component Library feature pages and improve UI for managing reuse and "certified" component library.
@@ -181,6 +198,7 @@ v0.9.1.45.1 (November 5, 2020)
 
 * Update various Python libraries (#1052)
 * Update jquery to 3.5.1, quill to 1.3.7, bootstrap to 3.4.1 (#1052)
+
 
 v0.9.1.45 (October 24, 2020)
 ----------------------------
