@@ -12,8 +12,9 @@ from guidedmodules.management.commands.load_modules import Command as load_modul
 from siteapp.models import User, Organization, Portfolio
 from siteapp.tests import SeleniumTest, var_sleep
 
-FIXTURE_DIR="fixtures"
-TEST_FILENAME="test"
+FIXTURE_DIR = "fixtures"
+TEST_FILENAME = "test"
+TEST_SPECIAL_FILENAME = "test\\\".png"
 
 class DiscussionTests(SeleniumTest):
 
@@ -107,7 +108,6 @@ class DiscussionTests(SeleniumTest):
         return cookies
 
     def test_validate_file_extension(self):
-
         # Load test file paths
         random_ext = ".random"
 
@@ -149,9 +149,7 @@ class DiscussionTests(SeleniumTest):
             is_valid = validate_file_extension(file_model)
             self.assertIsNotNone(is_valid)
 
-
     def test_discussion(self):
-
         # Log in and create a new project.
         self._login()
         self._new_project()
@@ -199,7 +197,7 @@ class DiscussionTests(SeleniumTest):
 
         self.assertInNodeText("¥", '.comment[data-id="3"] .comment-text p')
 
-        # Test file attachments
+        # Test file attachments upload successfully
 
         # We need to upload a file that we know exists.
         test_file_name = "".join([TEST_FILENAME, ".png"])
@@ -209,11 +207,10 @@ class DiscussionTests(SeleniumTest):
             test_file_name
         )
 
-
         self.fill_field("#discussion-attach-file", test_file_path)
         var_sleep(1)
         self.click_element("#discussion .comment-input button.btn-primary")
-        var_sleep(1) # Give time for the image to upload.
+        var_sleep(1)  # Give time for the image to upload.
 
         # Test that we have an image.
         img = self.browser.find_element_by_css_selector('.comment[data-id="4"] .comment-text p img')
@@ -222,7 +219,7 @@ class DiscussionTests(SeleniumTest):
         # Test that valid PNG image actually exists with valid content type.
         image_url = img.get_attribute('src')
         cookies = self._get_browser_cookies()
-        response = requests.get(image_url,cookies=cookies)
+        response = requests.get(image_url, cookies=cookies)
         image_contents = response.content
 
         file_model = SimpleUploadedFile(test_file_name, image_contents, content_type="image/png")
@@ -235,3 +232,80 @@ class DiscussionTests(SeleniumTest):
             return http.status!=404;""".format(image_url))
 
         self.assertTrue(result)
+
+        # Test that we can upload files of the same name
+
+        test_file_name = "".join([TEST_FILENAME, ".png"])
+        test_file_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            FIXTURE_DIR,
+            test_file_name
+        )
+        on_disk_contents = None
+        with open(test_file_path, "rb") as filep:
+            on_disk_contents = filep.read()
+
+        self.fill_field("#discussion-attach-file", test_file_path)
+        var_sleep(1)
+        self.click_element("#discussion .comment-input button.btn-primary")
+        var_sleep(1)  # Give time for the image to upload.
+
+        # Test that we still have an image.
+        img = self.browser.find_element_by_css_selector('.comment[data-id="5"] .comment-text p img')
+        self.assertIsNotNone(img)
+
+        # Getting content at url
+        image_url = img.get_attribute('src')
+        cookies = self._get_browser_cookies()
+        response = requests.get(image_url, cookies=cookies)
+        image_contents = response.content
+
+        # Test that file is the same as on disk contents
+        self.assertEqual(image_contents, on_disk_contents)
+
+        # Test that image is at attachment #2
+        self.assertIn("attachment/2", image_url)
+
+        result = self.browser.execute_script("""var http = new XMLHttpRequest();
+            http.open('HEAD', '{}', false);
+            http.send();
+            return http.status!=404;""".format(image_url))
+
+        self.assertTrue(result)
+
+        # Test file with special character in name was uploaded
+        test_file_name = TEST_SPECIAL_FILENAME
+        test_file_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            FIXTURE_DIR,
+            test_file_name
+        )
+        on_disk_contents = None
+        with open(test_file_path, "rb") as filep:
+            on_disk_contents = filep.read()
+
+        self.fill_field("#discussion-attach-file", test_file_path)
+        var_sleep(1)
+        self.click_element("#discussion .comment-input button.btn-primary")
+        var_sleep(1)  # Give time for the image to upload.
+
+        # Test that we still have an image.
+        img = self.browser.find_element_by_css_selector('.comment[data-id="6"] .comment-text p img')
+        self.assertIsNotNone(img)
+
+        # Getting content at url
+        img_url = img.get_attribute('src')
+        cookies = self._get_browser_cookies()
+        response = requests.get(img_url, cookies=cookies)
+        img_contents = response.content
+
+        # Test that file is the same as on disk contents
+        self.assertEqual(img_contents, on_disk_contents)
+
+        result = self.browser.execute_script("""var http = new XMLHttpRequest();
+            http.open('HEAD', '{}', false);
+            http.send();
+            return http.status!=404;""".format(img_url))
+
+        self.assertTrue(result)
+
