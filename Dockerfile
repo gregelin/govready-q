@@ -111,7 +111,6 @@ COPY quickstart.sh .
 RUN mkdir -p local && echo '{ "static": "static_root", "debug": false, "host": "_", "https": false }' > local/environment.json
 RUN python3.6 manage.py collectstatic --noinput
 
-
 # Configure supervisord.
 # a) Wipe out /var/{run,log} because when these directories are mounted with
 #    tmpfs they will be empty, so start them empty so the two setups match.
